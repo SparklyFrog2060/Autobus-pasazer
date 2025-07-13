@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ekran pasażera</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #e0f2ff;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 26px;
+    }
+    #current-stop {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #222;
+    }
+    #next-stop {
+      font-size: 20px;
+      color: #555;
+    }
+    #countdown {
+      font-size: 48px;
+      margin: 20px 0;
+      color: #007bff;
+    }
+    #stop-btn {
+      font-size: 28px;
+      padding: 20px;
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 30px;
+    }
+    #all-stops {
+      margin-top: 40px;
+      font-size: 16px;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Najbliższy przystanek</h1>
+  <div id="current-stop">Czekaj na rozpoczęcie trasy...</div>
+  <div id="next-stop"></div>
+  <div id="countdown">-</div>
+  <button id="stop-btn">🛑 STOP na żądanie</button>
+  <div id="all-stops"></div>
+
+  <script>
+    const stops = [
+      { time: 0, name: "Ocytko Taras (start)" },
+      { time: 17, name: "Ocytko Wyjazd" },
+      { time: 28, name: "Ocytko Szopa" },
+      { time: 40, name: "Ocytko Garaż" },
+      { time: 47, name: "Ocytko Taras (koniec)" }
+    ];
+
+    let startTime = null;
+    let interval = null;
+
+    function update() {
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000);
+
+      let current = "W drodze...";
+      let next = "Brak kolejnego przystanku";
+      let countdown = "-";
+
+      for (let i = 0; i < stops.length; i++) {
+        if (elapsed < stops[i].time) {
+          current = i > 0 ? stops[i - 1].name : "Trasa nie rozpoczęła się";
+          next = stops[i].name;
+          countdown = `${stops[i].time - elapsed}s`;
+          break;
+        }
+      }
+
+      if (elapsed >= stops[stops.length - 1].time) {
+        current = stops[stops.length - 1].name;
+        next = "Koniec trasy";
+        countdown = "-";
+      }
+
+      document.getElementById("current-stop").textContent = current;
+      document.getElementById("next-stop").textContent = `Następny: ${next}`;
+      document.getElementById("countdown").textContent = countdown;
+    }
+
+    function startRoute() {
+      startTime = Date.now();
+      clearInterval(interval);
+      interval = setInterval(update, 1000);
+    }
+
+    function scheduleStart() {
+      const now = new Date();
+      const msNow = now.getTime();
+      const nextStart = new Date(now);
+      const min = now.getMinutes();
+      nextStart.setSeconds(0);
+      nextStart.setMilliseconds(0);
+      if (min % 2 === 0 && now.getSeconds() < 59) {
+        // czekaj do końca tej minuty
+      } else {
+        nextStart.setMinutes(min + (2 - min % 2));
+      }
+
+      const delay = nextStart.getTime() - msNow;
+      setTimeout(() => {
+        startRoute();
+        scheduleStart(); // zaplanuj następną po 2 min
+      }, delay);
+
+      update();
+    }
+
+    document.getElementById("stop-btn").onclick = () => {
+      alert("🚏 Zgłoszono STOP na żądanie!");
+      // Tu można dodać wysyłanie do WebSocket
+    };
+
+    // Wyświetl przystanki
+    const all = stops.map(s => `➡️ ${s.name} (${s.time}s)`).join("<br>");
+    document.getElementById("all-stops").innerHTML = `<h3>Rozkład:</h3>${all}`;
+
+    // Start
+    scheduleStart();
+  </script>
+</body>
+</html>
