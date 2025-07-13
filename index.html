@@ -1,48 +1,45 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ekran pasażera</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
+    html, body {
+      margin: 0;
+      padding: 0;
       background: #e0f2ff;
-      padding: 20px;
+      font-family: Arial, sans-serif;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
     }
     h1 {
-      font-size: 26px;
+      font-size: 4vw;
     }
     #current-stop {
-      font-size: 32px;
+      font-size: 6vw;
       font-weight: bold;
-      margin: 20px 0;
       color: #222;
+      margin: 1vh 0;
     }
     #next-stop {
-      font-size: 20px;
+      font-size: 4vw;
       color: #555;
     }
     #countdown {
-      font-size: 48px;
-      margin: 20px 0;
+      font-size: 10vw;
+      margin: 3vh 0;
       color: #007bff;
     }
-    #stop-btn {
-      font-size: 28px;
-      padding: 20px;
-      background-color: red;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 400px;
-      margin-top: 30px;
-    }
     #all-stops {
-      margin-top: 40px;
-      font-size: 16px;
+      font-size: 2.5vw;
+      max-width: 90vw;
       color: #444;
     }
   </style>
@@ -63,27 +60,6 @@
       { time: 40, name: "Ocytko Garaż" },
       { time: 47, name: "Ocytko Taras (koniec)" }
     ];
-
-    let interval = null;
-
-    function getNextEvenMinuteTime() {
-      const now = new Date();
-      const next = new Date(now);
-      next.setSeconds(0);
-      next.setMilliseconds(0);
-      let m = now.getMinutes();
-      if (m % 2 === 0) {
-        if (now.getSeconds() === 0) {
-          // już równa minuta, nic nie zmieniaj
-        } else {
-          m += 2;
-        }
-      } else {
-        m += 1;
-      }
-      next.setMinutes(m);
-      return next.getTime();
-    }
 
     function getCurrentStartTime() {
       const now = Date.now();
@@ -119,18 +95,11 @@
       document.getElementById("countdown").textContent = countdown;
     }
 
-    document.getElementById("stop-btn").onclick = () => {
-      alert("🛑 STOP na żądanie został zgłoszony!");
-      // tutaj można dodać wysyłanie WebSocket
-    };
-
-    // lista przystanków
     const list = stops.map(s => `➡️ ${s.name} (${s.time}s)`).join("<br>");
     document.getElementById("all-stops").innerHTML = `<h3>Rozkład przystanków:</h3>${list}`;
 
-    // uruchom aktualizację co sekundę
     update();
-    interval = setInterval(update, 1000);
+    setInterval(update, 1000);
   </script>
 </body>
 </html>
