@@ -50,9 +50,10 @@
 <body>
 
   <h1>Najbliższy przystanek</h1>
-  <div id="current-stop">Czekaj na rozpoczęcie trasy...</div>
-  <div id="next-stop"></div>
+  <div id="current-stop">---</div>
+  <div id="next-stop">---</div>
   <div id="countdown">-</div>
+  <button id="stop-btn">🛑 STOP na żądanie</button>
   <div id="all-stops"></div>
 
   <script>
@@ -64,20 +65,44 @@
       { time: 47, name: "Ocytko Taras (koniec)" }
     ];
 
-    let startTime = null;
     let interval = null;
 
-    function update() {
+    function getNextEvenMinuteTime() {
+      const now = new Date();
+      const next = new Date(now);
+      next.setSeconds(0);
+      next.setMilliseconds(0);
+      let m = now.getMinutes();
+      if (m % 2 === 0) {
+        if (now.getSeconds() === 0) {
+          // już równa minuta, nic nie zmieniaj
+        } else {
+          m += 2;
+        }
+      } else {
+        m += 1;
+      }
+      next.setMinutes(m);
+      return next.getTime();
+    }
+
+    function getCurrentStartTime() {
       const now = Date.now();
-      const elapsed = Math.floor((now - startTime) / 1000);
+      const twoMin = 2 * 60 * 1000;
+      return now - (now % twoMin);
+    }
+
+    function update() {
+      const startTime = getCurrentStartTime();
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
 
       let current = "W drodze...";
-      let next = "Brak kolejnego przystanku";
+      let next = "Koniec trasy";
       let countdown = "-";
 
       for (let i = 0; i < stops.length; i++) {
         if (elapsed < stops[i].time) {
-          current = i > 0 ? stops[i - 1].name : "Trasa nie rozpoczęła się";
+          current = i > 0 ? stops[i - 1].name : "Ocytko Taras (start)";
           next = stops[i].name;
           countdown = `${stops[i].time - elapsed}s`;
           break;
@@ -95,45 +120,18 @@
       document.getElementById("countdown").textContent = countdown;
     }
 
-    function startRoute() {
-      startTime = Date.now();
-      clearInterval(interval);
-      interval = setInterval(update, 1000);
-    }
-
-    function scheduleStart() {
-      const now = new Date();
-      const msNow = now.getTime();
-      const nextStart = new Date(now);
-      const min = now.getMinutes();
-      nextStart.setSeconds(0);
-      nextStart.setMilliseconds(0);
-      if (min % 2 === 0 && now.getSeconds() < 59) {
-        // czekaj do końca tej minuty
-      } else {
-        nextStart.setMinutes(min + (2 - min % 2));
-      }
-
-      const delay = nextStart.getTime() - msNow;
-      setTimeout(() => {
-        startRoute();
-        scheduleStart(); // zaplanuj następną po 2 min
-      }, delay);
-
-      update();
-    }
-
     document.getElementById("stop-btn").onclick = () => {
-      alert("🚏 Zgłoszono STOP na żądanie!");
-      // Tu można dodać wysyłanie do WebSocket
+      alert("🛑 STOP na żądanie został zgłoszony!");
+      // tutaj można dodać wysyłanie WebSocket
     };
 
-    // Wyświetl przystanki
-    const all = stops.map(s => `➡️ ${s.name} (${s.time}s)`).join("<br>");
-    document.getElementById("all-stops").innerHTML = `<h3>Rozkład:</h3>${all}`;
+    // lista przystanków
+    const list = stops.map(s => `➡️ ${s.name} (${s.time}s)`).join("<br>");
+    document.getElementById("all-stops").innerHTML = `<h3>Rozkład przystanków:</h3>${list}`;
 
-    // Start
-    scheduleStart();
+    // uruchom aktualizację co sekundę
+    update();
+    interval = setInterval(update, 1000);
   </script>
 </body>
 </html>
