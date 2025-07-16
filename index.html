@@ -2,104 +2,96 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ekran pasażera</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Widok Pasażera</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background: #e0f2ff;
-      font-family: Arial, sans-serif;
-      width: 100vw;
+      width: 100%;
+      height: 100%;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: row;
+      background: #f0f0f0;
+    }
+    #mapa {
+      flex: 1;
+      width: 50vw;
       height: 100vh;
-      overflow: hidden;
+      border: none;
+    }
+    #info {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       text-align: center;
+      padding: 1rem;
     }
-    h1 {
-      font-size: 4vw;
+    #info h1 {
+      font-size: 2rem;
+      margin-bottom: 2rem;
     }
-    #current-stop {
-      font-size: 6vw;
-      font-weight: bold;
-      color: #222;
-      margin: 1vh 0;
-    }
-    #next-stop {
-      font-size: 4vw;
-      color: #555;
-    }
-    #countdown {
-      font-size: 10vw;
-      margin: 3vh 0;
-      color: #007bff;
-    }
-    #all-stops {
-      font-size: 2.5vw;
-      max-width: 90vw;
-      color: #444;
+    #status {
+      font-size: 1.5rem;
+      padding: 1rem;
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
-
-  <h1>Najbliższy przystanek</h1>
-  <div id="current-stop">---</div>
-  <div id="next-stop">---</div>
-  <div id="countdown">-</div>
-  <div id="all-stops"></div>
+  <iframe id="mapa" src="https://sparklyfrog2060.github.io/Autobus-mapa/"></iframe>
+  <div id="info">
+    <h1>Ocytko Bus</h1>
+    <div id="status">Czekam na start...</div>
+  </div>
 
   <script>
-    const stops = [
-      { time: 0, name: "Ocytko Taras (start)" },
-      { time: 17, name: "Ocytko Wyjazd" },
-      { time: 28, name: "Ocytko Szopa" },
-      { time: 40, name: "Ocytko Garaż" },
-      { time: 47, name: "Ocytko Taras (koniec)" }
+    const przystanki = [
+      { czas: 0, nazwa: "Następny przystanek: Ocytko Wyjazd" },
+      { czas: 16, nazwa: "Następny przystanek: Ocytko Szopa" },
+      { czas: 28, nazwa: "Następny przystanek: Ocytko Garaż" },
+      { czas: 37, nazwa: "Następny przystanek: Ocytko Taras, koniec trasy" }
     ];
 
-    function getCurrentStartTime() {
-      const now = Date.now();
-      const twoMin = 2 * 60 * 1000;
-      return now - (now % twoMin);
+    const statusDiv = document.getElementById("status");
+    let startCzas = null;
+    let indeks = 0;
+
+    function znajdzNajblizszyStart() {
+      const teraz = new Date();
+      let m = teraz.getMinutes();
+      const s = teraz.getSeconds();
+      if (m % 2 !== 0 || s >= 60) m += 1;
+      if (m % 2 !== 0) m += 1;
+      if (m >= 60) {
+        teraz.setHours(teraz.getHours() + 1);
+        m = 0;
+      }
+      return new Date(teraz.getFullYear(), teraz.getMonth(), teraz.getDate(), teraz.getHours(), m, 0, 0).getTime();
     }
 
-    function update() {
-      const startTime = getCurrentStartTime();
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    function aktualizuj() {
+      const teraz = Date.now();
 
-      let current = "W drodze...";
-      let next = "Koniec trasy";
-      let countdown = "-";
-
-      for (let i = 0; i < stops.length; i++) {
-        if (elapsed < stops[i].time) {
-          current = i > 0 ? stops[i - 1].name : "Ocytko Taras (start)";
-          next = stops[i].name;
-          countdown = `${stops[i].time - elapsed}s`;
-          break;
-        }
+      if (!startCzas || teraz - startCzas > 60000) {
+        startCzas = znajdzNajblizszyStart();
+        indeks = 0;
       }
 
-      if (elapsed >= stops[stops.length - 1].time) {
-        current = stops[stops.length - 1].name;
-        next = "Koniec trasy";
-        countdown = "-";
-      }
+      const uplynelo = Math.floor((teraz - startCzas) / 1000);
 
-      document.getElementById("current-stop").textContent = current;
-      document.getElementById("next-stop").textContent = `Następny: ${next}`;
-      document.getElementById("countdown").textContent = countdown;
+      if (indeks < przystanki.length && uplynelo >= przystanki[indeks].czas) {
+        statusDiv.innerText = przystanki[indeks].nazwa;
+        indeks++;
+      }
     }
 
-    const list = stops.map(s => `➡️ ${s.name} (${s.time}s)`).join("<br>");
-    document.getElementById("all-stops").innerHTML = `<h3>Rozkład przystanków:</h3>${list}`;
-
-    update();
-    setInterval(update, 1000);
+    setInterval(aktualizuj, 1000);
   </script>
 </body>
 </html>
